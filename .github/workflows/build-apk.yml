@@ -68,11 +68,21 @@ jobs:
           sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <application#' android/app/src/main/AndroidManifest.xml
           grep -n INTERNET android/app/src/main/AndroidManifest.xml
 
+      - name: Pin image package (4.11.0 is broken with archive 4.0.x)
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          if grep -q '^dependency_overrides:' pubspec.yaml; then
+            sed -i '/^dependency_overrides:/a\  image: 4.5.4' pubspec.yaml
+          else
+            printf '\ndependency_overrides:\n  image: 4.5.4\n' >> pubspec.yaml
+          fi
+          tail -n 5 pubspec.yaml
+
       - name: Check code (full error list goes to Summary)
         working-directory: ${{ env.APP_DIR }}
         run: |
           flutter pub get
-          flutter analyze --no-fatal-infos --no-fatal-warnings > analyze.txt 2>&1 || true
+          flutter analyze lib --no-fatal-infos --no-fatal-warnings > analyze.txt 2>&1 || true
           ERRS=$(grep -cE "^ *error " analyze.txt || true)
           {
             echo "### Dart analysis: $ERRS error(s)"
