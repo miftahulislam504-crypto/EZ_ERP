@@ -210,22 +210,25 @@ class TopBar extends StatelessWidget {
       height: 68,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: AppColors.border))),
-      child: const Row(
+      child: Row(
         children: [
-          CompanySwitcher(),
-          SizedBox(width: 10),
-          BranchSwitcher(),
-          SizedBox(width: 20),
+          const CompanySwitcher(),
+          const SizedBox(width: 10),
+          const BranchSwitcher(),
+          const SizedBox(width: 20),
           Expanded(
             child: Align(
               alignment: Alignment.center,
-              child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 460), child: _SearchPill()),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: const _SearchPill(),
+              ),
             ),
           ),
-          SizedBox(width: 12),
-          BellButton(),
-          SizedBox(width: 4),
-          ProfileMenu(),
+          const SizedBox(width: 12),
+          const BellButton(),
+          const SizedBox(width: 4),
+          const ProfileMenu(),
         ],
       ),
     );
