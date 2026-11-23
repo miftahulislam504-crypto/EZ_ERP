@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/permissions/permissions.dart';
 import '../../core/state/session.dart';
@@ -251,6 +252,13 @@ class _CrudPageState extends ConsumerState<CrudPage> {
     );
   }
 
+  /// Opens the profile page when the config has one, otherwise the edit form.
+  VoidCallback? _rowTap(String orgId, Map<String, dynamic> row, bool canEdit) {
+    final path = c.profilePath?.call(row);
+    if (path != null) return () => context.go(path);
+    return canEdit ? () => _openForm(orgId, row) : null;
+  }
+
   Widget _rowMenu(String orgId, Map<String, dynamic> row, bool canEdit, bool canDelete) {
     final active = row['is_active'] != false;
     final isHeadOffice = row['is_head_office'] == true;
@@ -305,7 +313,7 @@ class _CrudPageState extends ConsumerState<CrudPage> {
           for (final r in rows) ...[
             const Divider(),
             InkWell(
-              onTap: canEdit ? () => _openForm(orgId, r) : null,
+              onTap: _rowTap(orgId, r, canEdit),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(
@@ -356,7 +364,7 @@ class _CrudPageState extends ConsumerState<CrudPage> {
       padding: const EdgeInsets.only(bottom: 10),
       child: AppCard(
         padding: const EdgeInsets.fromLTRB(16, 14, 6, 14),
-        onTap: canEdit ? () => _openForm(orgId, r) : null,
+        onTap: _rowTap(orgId, r, canEdit),
         child: Row(
           children: [
             Expanded(

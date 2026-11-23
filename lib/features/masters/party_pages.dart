@@ -20,7 +20,7 @@ List<FieldDef> _addressFields() => const [
 final _customerConfig = CrudConfig(
   title: 'Customers',
   singular: 'Customer',
-  subtitle: 'People and companies you sell to',
+  subtitle: 'People and companies you sell to. Open one to see what they owe, their documents and statement.',
   table: 'parties',
   module: Modules.sales,
   hasActiveFlag: true,
@@ -29,6 +29,7 @@ final _customerConfig = CrudConfig(
   filters: const {'is_customer': true},
   extraInsert: const {'is_customer': true},
   collapsedSections: const ['Business information'],
+  profilePath: (row) => '/sales/customers/${row['id']}',
   fields: [
     const FieldDef('code', 'Customer code', inList: true, flex: 2, lockOnEdit: true, hint: 'Generated automatically'),
     const FieldDef('name', 'Name', required: true, inList: true, flex: 4),
@@ -41,15 +42,6 @@ final _customerConfig = CrudConfig(
     const FieldDef('shipping_address', 'Shipping address', type: FieldType.multiline, section: 'Billing address', hint: 'Leave empty if same as billing'),
     const FieldDef('credit_limit', 'Credit limit', type: FieldType.money, section: 'Credit and terms', inList: true, flex: 2),
     const FieldDef('payment_terms_days', 'Payment terms (days)', type: FieldType.number, section: 'Credit and terms', hint: 'For example 30'),
-    const FieldDef(
-      'opening_receivable',
-      'Opening receivable',
-      type: FieldType.money,
-      defaultValue: 0,
-      sensitive: true,
-      section: 'Credit and terms',
-      hint: 'Amount the customer already owes you',
-    ),
     const FieldDef('trade_license_no', 'Trade license number', section: 'Business information'),
     const FieldDef('tax_id', 'Tax or BIN number', section: 'Business information'),
     const FieldDef('website', 'Website', section: 'Business information'),
@@ -61,7 +53,7 @@ final _customerConfig = CrudConfig(
 final _supplierConfig = CrudConfig(
   title: 'Suppliers',
   singular: 'Supplier',
-  subtitle: 'Vendors and service providers you buy from',
+  subtitle: 'Vendors and service providers you buy from. Open one to see what you owe, their bills and statement.',
   table: 'parties',
   module: Modules.purchase,
   hasActiveFlag: true,
@@ -70,6 +62,7 @@ final _supplierConfig = CrudConfig(
   filters: const {'is_supplier': true},
   extraInsert: const {'is_supplier': true},
   collapsedSections: const ['Business information'],
+  profilePath: (row) => '/purchase/suppliers/${row['id']}',
   fields: [
     const FieldDef('code', 'Supplier code', inList: true, flex: 2, lockOnEdit: true, hint: 'Generated automatically'),
     const FieldDef('name', 'Name', required: true, inList: true, flex: 4),
@@ -80,15 +73,6 @@ final _supplierConfig = CrudConfig(
     FieldDef('supplier_category_id', 'Supplier category', type: FieldType.dropdown, optionsSource: supplierCategoryOptions, inList: true, flex: 2),
     ..._addressFields(),
     const FieldDef('payment_terms_days', 'Payment terms (days)', type: FieldType.number, section: 'Payment terms', hint: 'For example 30'),
-    const FieldDef(
-      'opening_payable',
-      'Opening payable',
-      type: FieldType.money,
-      defaultValue: 0,
-      sensitive: true,
-      section: 'Payment terms',
-      hint: 'Amount you already owe this supplier',
-    ),
     const FieldDef('trade_license_no', 'Trade license number', section: 'Business information'),
     const FieldDef('tax_id', 'Tax or BIN number', section: 'Business information'),
     const FieldDef('website', 'Website', section: 'Business information'),
@@ -96,6 +80,10 @@ final _supplierConfig = CrudConfig(
     const FieldDef('notes', 'Notes', type: FieldType.multiline, section: 'Business information'),
   ],
 );
+
+/// Form definitions, shared with the profile pages that open the same edit form.
+CrudConfig get customerCrudConfig => _customerConfig;
+CrudConfig get supplierCrudConfig => _supplierConfig;
 
 class CustomersPage extends StatelessWidget {
   const CustomersPage({super.key});

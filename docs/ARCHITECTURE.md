@@ -59,8 +59,8 @@ Screens that need nested lines (invoices, purchase orders, vouchers) get purpose
 | --- | --- |
 | 0002_masters (done) | parties (customers and suppliers), products, warehouses, tax rates |
 | 0003_finance (done) | chart of accounts, vouchers and lines, financial accounts, income and expense, posting and ledger functions |
-| 0004_trade | one document header and lines table for requisitions, orders, receipts, bills, quotations, invoices; payments and allocations |
-| 0005_inventory | stock movement ledger, stock balance view, adjustments |
+| 0004_purchase_stock (done) | shared document header and lines table, purchase workflow, stock ledger and balances, adjustments, posting for receipts, bills and adjustments |
+| 0005_sales_payments (done) | sales quotations, orders and invoices on the same document tables, payments and allocations, opening balances, aging, statements and dues |
 | 0006_approvals | approval requests and actions, amount-based rules |
 | 0007_reports | SQL views and functions for dashboards and reports |
 
@@ -69,7 +69,8 @@ Design rules:
 - Financial records are never deleted. Mistakes are fixed by reversal or adjustment vouchers.
 - Posting (documents to ledger and stock) happens inside Postgres functions so it is atomic.
 - Receivables and payables are derived from invoices, bills and payment allocations, not stored twice.
-- Money uses `numeric(18,2)`; quantities use `numeric(18,3)`.
+- Money uses `numeric(18,2)`; quantities use `numeric(18,3)`. Unit prices and unit costs use `numeric(18,4)` so
+  per-unit prices that are not whole cents survive; line and document amounts are always rounded to two decimals.
 
 ## Master data notes
 
@@ -104,6 +105,106 @@ Design rules:
   bill can be attached before the first save. Photos can be taken on phones.
 - Seeded chart of accounts is a neutral starting point. System accounts (receivable, payable, inventory, sales, cost
   of goods, tax accounts, opening balance equity) have keys that later steps post to.
+
+## Purchase and stock engine
+
+- One header table (`trade_documents`) and one line table (`trade_document_lines`) hold requisitions, purchase orders,
+  goods receipts and supplier bills, and (since step 1D-2) quotations, sales orders and invoices. `source_id` links a
+  document to the one it was created from; `source_line_id` links lines, which is what quantity tracking and matching
+  are built on. Totals, tax and discounts are recalculated by the database on every save.
+- Flow: requisition, approval, purchase order, approval, goods receipt (posted), supplier bill (approved and posted).
+  A requisition becomes Ordered while a live order exists and returns to Approved if that order is deleted or
+  cancelled. An order moves to Partial and Received from its posted receipts, and can be Closed when the rest will not
+  arrive. All status changes happen inside functions (save_purchase_document, submit_document, approve_document,
+  reject_document, cancel_document, discard_document, close_purchase_order, post_goods_receipt, post_supplier_bill).
+- Documents have no direct write policies. Posted and cancelled documents are locked by triggers; a posted receipt or
+  bill can only be cancelled, which reverses its stock movements and accounting entry.
+- Three-way match: stock items are billed only from posted goods receipts of the same supplier, never for more than
+  was received, and a receipt line cannot be received for more than the order line allows. Services and non-stock
+  items are billed directly or from order lines and carry an expense or asset account. A supplier invoice number can
+  be used once per supplier.
+- Accounting: a goods receipt posts Dr Inventory, Cr Goods received not billed (2150). A bill debits that account at
+  the receipt value, books any price difference to Purchase price variance (5150), debits Input tax receivable and
+  credits Accounts payable for the supplier. Service lines debit their chosen account.
+- Stock: every quantity change is a row in `stock_movements`, which cannot be updated or deleted. `stock_balances`
+  holds the running quantity, average cost and value per item and warehouse and is written only by the stock engine
+  (`_stock_move`), under a row lock. Costing is weighted average per warehouse. Stock cannot go negative. A movement is
+  reversed at the cost it came in at, and the reversal is refused if part of that stock has already been used.
+  Invariants checked by the SQL tests: balances equal the sum of movements, and the Inventory ledger account equals
+  total stock value.
+- Stock adjustments (opening stock, count correction, damaged, expired, lost, internal issue) are approved before they
+  post. Increases need a unit cost; decreases leave at average cost. Value differences post against Stock adjustments
+  and write-offs (5200); opening stock posts against Opening balance equity.
+- Cost figures are financial data. Direct reads of movements and balances need both inventory and financial data
+  access. Screens use stock_summary, stock_ledger and stock_on_hand, which show quantities to everyone with stock
+  access and return null cost and value to roles without financial data.
+
+Permissions by action:
+
+| Action | Requisition | Purchase order | Goods receipt | Supplier bill | Stock adjustment |
+| --- | --- | --- | --- | --- | --- |
+| View | requisitions view (own only, unless approver or purchase viewer) | purchase | purchase or inventory | purchase or finance | inventory |
+| Create and edit draft | requisitions create (own) or edit | purchase | inventory or purchase | purchase | inventory |
+| Approve or reject | requisitions approve | purchase approve | not used | purchase approve | inventory approve |
+| Post | not used | not used | inventory edit or purchase approve | purchase approve | inventory approve |
+| Cancel posted | not used | not used | as post | as post | inventory approve |
+
+## Sales and payments engine
+
+- Sales documents live on the same header and line tables as purchases. Sales have their own workflow functions
+  (save_sales_document, submit_sales_document, approve_sales_document, reject_sales_document,
+  discard_sales_document, cancel_sales_document, close_sales_order, mark_quotation_sent, set_quotation_outcome,
+  reopen_quotation, post_sales_invoice) so the purchase functions were not touched. The screens pick the function
+  by document type.
+- Flow: quotation (draft, sent, accepted or declined), converted into a sales order (approval), then invoiced in full
+  or in parts. A quotation is Converted while a live order exists and returns to Accepted if that order is deleted or
+  cancelled. An order moves to Partial and Invoiced from its posted invoices and can be Closed. An invoice raised from
+  an order cannot exceed what is left to invoice, and drafts count against it. A quotation shows Expired once its
+  valid-until date has passed; this is display only and does not block converting it.
+- Posting an invoice: Dr Accounts receivable (customer), Cr Sales revenue (or the income account chosen on a line)
+  and Output tax payable; for stock items the engine issues stock at weighted average cost and posts Dr Cost of goods
+  sold, Cr Inventory. Stock cannot go negative, so an invoice for more than is in stock is refused.
+- Cancelling a posted invoice reverses the accounting entry and returns the stock at exactly the value it left at
+  (`_stock_reverse`). The ordinary reversal recomputes value from a rounded unit cost, which can drift by cents on
+  large quantities when an issue emptied the stock; the sales path avoids that. A trigger refuses to cancel an invoice
+  or bill while payments are applied to it.
+- Credit limit: when an invoice is posted, open invoices less unapplied receipts plus this invoice must not exceed the
+  customer's limit. A user who may approve sales can post anyway after a confirmation, and the override is recorded
+  on the invoice (`credit_overridden`). Orders are not blocked.
+- Opening balances are posted documents: an opening invoice (Dr Accounts receivable, Cr Opening balance equity) or an
+  opening bill (Dr Opening balance equity, Cr Accounts payable), with `is_opening` set, the original date and due
+  date, and an optional original number. They age and are paid like any other document and can be cancelled. The
+  old opening receivable and payable fields were removed from the customer and supplier forms; a value already stored
+  there is reduced as it is entered as an opening document, and the profile page points it out until then.
+- Payments: `payments` holds a receipt (kind receipt) or a supplier payment (kind payment). It is posted when
+  recorded (Dr Cash or bank, Cr Accounts receivable for the part applied, Cr Customer advances for the rest, and the
+  mirror for suppliers using Advances to suppliers). `payment_allocations` links a payment to invoices or bills. It is
+  never edited or deleted; it can only be marked reversed. Open amounts are always computed from documents and active
+  allocations (views `document_balances` and `payment_balances`), so nothing is stored twice.
+- Advances: money not applied stays on Customer advances (2200) or Advances to suppliers (1400). `apply_advance`
+  applies it to a document later with a journal between the advance account and the control account.
+  `unapply_allocation` returns an amount to the advance. `cancel_payment` mirrors the original entry when the payment
+  still stands as recorded; when allocations were changed afterwards it first returns every active allocation to the
+  advance and then takes the whole amount out of the advance, so the ledgers cannot drift.
+- Aging is counted from the due date: not yet due, 1 to 30, 31 to 60, 61 to 90 and over 90 days past due, with
+  unapplied advances shown beside each party. The functions take an as-of date. `party_statement` returns documents
+  and payments with a running balance and an opening balance for a chosen start date. `aging_control_check` compares
+  the ledger control accounts with the open documents and advances behind them; a difference means a manual journal
+  was posted straight to a control account, and the Receivables and Payables screens show a notice.
+- Reads run with the caller's rights, so row level security decides what each person sees: invoices and receipts
+  need sales or finance access, bills and supplier payments need purchase or finance access.
+
+Permissions by action (sales and payments):
+
+| Action | Who |
+| --- | --- |
+| View quotations, orders, invoices, receipts | sales (receipts also finance) |
+| Create and edit drafts, send a quotation, submit | sales create or edit |
+| Approve an order, approve and post an invoice, close an order, cancel a posted invoice | sales approve |
+| Record a customer receipt, apply an advance | finance create or sales approve |
+| Record a supplier payment | finance create |
+| Cancel a payment, unapply an allocation | finance approve |
+| Enter an opening balance | finance create |
 
 ## Offline behavior
 

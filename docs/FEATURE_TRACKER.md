@@ -10,7 +10,8 @@ or the phase number it ships in. Nothing is removed; items only move between pha
 | 1A Foundation | Auth, onboarding, roles and permissions, organization, branches, departments, users, audit log, notification center, responsive shell, design system, CRUD engine, core migration | Done |
 | 1B Masters | Customers, suppliers, lookups (units, categories, brands, payment methods), numbering rules, products and services, warehouses, tax rates | Done |
 | 1C Finance core | Chart of accounts, journal, payment, receipt and contra vouchers with posting, cash and bank accounts, income and expense, cashbook and bankbook | Done |
-| 1D Trade | Requisitions, purchase orders, goods receipts, supplier bills, quotations, sales orders, invoices, payments, stock ledger and adjustments, receivables and payables with aging | Next |
+| 1D-1 Purchase and stock | Requisitions, purchase orders, goods receipts, supplier bills with three-way matching, stock ledger, warehouse balances, valuation, stock adjustments, accounting for receipts, bills and adjustments | Done |
+| 1D-2 Sales and payments | Quotations, sales orders, invoices, receipts and supplier payments with allocation, receivable and payable aging, statements, customer and supplier transaction history, opening balances as invoices and bills | Done |
 | 1E Release | Approvals inbox, notification events and push, basic reports, dashboard data, record search, PDF output, Phase 1 release | Next |
 
 A zip of the full project is delivered at the end of every phase, and as a checkpoint after each step.
@@ -54,9 +55,13 @@ A zip of the full project is delivered at the end of every phase, and as a check
 | Daily to yearly income and expense summaries | 1 | Next (1E, reports) |
 | Recurring expenses | 2 | Planned (automation in Phase 4) |
 | Budget versus actual, limit alerts | 2 | Planned |
-| Accounts receivable: dues, partial payments, overdue days, statement, advance and credit balance, aging | 1 | Next (1D) |
+| Accounts receivable: dues, partial payments, overdue days, statement, advance and credit balance, aging | 1 | Done (1D-2) |
 | Payment reminders to customers | 2 | Planned |
-| Accounts payable: bills, partial payment, due alerts, statement, advance to supplier, aging | 1 | Next (1D) |
+| Accounts payable: bills posted to the ledger with supplier and due date | 1 | Done (1D-1) |
+| Accounts payable: partial payment, statement, advance to supplier, aging | 1 | Done (1D-2) |
+| Opening balances entered as posted opening invoices and bills with their original dates, so they age and are paid like any document | 1 | Done (1D-2) |
+| Receipts and supplier payments with allocation to several documents, applying an advance later, unapplying and reversal | 1 | Done (1D-2) |
+| Receivable and payable control accounts checked against the open documents behind them | 1 | Done (1D-2) |
 | Multiple cash, bank and mobile wallet accounts with opening balance, receive, pay, deposit, withdrawal, transfer, cashbook, bankbook | 1 | Done |
 | Bank reconciliation, cheque lifecycle, daily cash closing | 2 | Planned |
 | Annual and monthly budgets, future cash flow planning | 2 and 4 | Planned |
@@ -69,23 +74,28 @@ A zip of the full project is delivered at the end of every phase, and as a check
 
 | Feature | Phase | Status |
 | --- | --- | --- |
-| Supplier profile, contact, address, category, trade license, payment terms, opening payable | 1 | Done |
-| Supplier documents, dues, advance, payment history | 1 | Next (1D) |
+| Supplier profile, contact, address, category, trade license, payment terms, opening payable (entered as opening bills) | 1 | Done |
+| Supplier documents (attachments on every purchase document) | 1 | Done |
+| Supplier dues, advance and payment history | 1 | Done (1D-2) |
 | Supplier contracts and files, rating and performance notes | 2 | Planned |
-| Requisition, approval, purchase order, goods receipt, bill, verification, payment, stock and account sync | 1 | Next (1D) |
+| Requisition, approval, purchase order, goods receipt, bill, verification, stock and account sync | 1 | Done (1D-1) |
+| Payment and partial payment of supplier bills | 1 | Done (1D-2) |
 | Supplier quotation collection and comparison | 2 | Planned |
 | Purchase return, supplier debit and credit adjustment | 2 | Planned |
-| Purchase history, latest price, supplier-wise report, pending PO and GRN, approval limit | 1 | Next (1D and 1E) |
+| Purchase history through linked documents, latest purchase price, open orders and pending approvals on the list screens | 1 | Done (1D-1) |
+| Supplier-wise purchase report, approval limit by amount | 1 | Next (1E) |
 | Purchase suggestion from reorder level | 2 | Planned (AI recommendation in Phase 4) |
 
 ## 7. Sales and customers
 
 | Feature | Phase | Status |
 | --- | --- | --- |
-| Customer profile for people and companies, billing and shipping address, trade license, group, credit limit, payment terms, opening receivable | 1 | Done |
-| Customer transaction history | 1 | Next (1D) |
+| Customer profile for people and companies, billing and shipping address, trade license, group, credit limit, payment terms, opening receivable (entered as opening invoices) | 1 | Done |
+| Customer transaction history | 1 | Done (1D-2) |
 | Notes, follow-ups and contact records | 2 | Planned |
-| Quotation, sales order, approval, invoice, partial payment and due tracking | 1 | Next (1D) |
+| Quotation, sales order, approval, invoice, partial payment and due tracking | 1 | Done (1D-2) |
+| Customer credit limit checked when an invoice is posted, with the override recorded on the invoice | 1 | Done (1D-2) |
+| Partial invoicing of a sales order, with the order following its invoices | 1 | Done (1D-2) |
 | Invoice PDF and print | 1 | Next (1E) |
 | Invoice email and share | 2 | Planned |
 | Delivery challan | 2 | Planned |
@@ -102,12 +112,14 @@ A zip of the full project is delivered at the end of every phase, and as a check
 | Variants | 2 | Planned |
 | Batch, serial, expiry and warranty tracking | 2 | Planned |
 | Multiple warehouses with default warehouse | 1 | Done |
-| Warehouse-wise stock quantities | 1 | Next (1D) |
+| Warehouse-wise stock quantities | 1 | Done (1D-1) |
 | Rack and shelf locations | 2 | Planned |
-| Goods receive, stock issue, adjustment, damaged and lost stock, movement history, valuation | 1 | Next (1D) |
+| Goods receive, stock issue, adjustment, opening stock, damaged, expired and lost stock, movement history, weighted average valuation | 1 | Done (1D-1) |
+| Stock issue to customers through invoices | 1 | Done (1D-2) |
 | Stock transfer with request, approval, dispatch and receive | 2 | Planned |
 | Physical stock count versus system stock | 2 | Planned |
-| Low stock and out of stock alerts | 1 | Next (1E) |
+| Low stock and out of stock warnings on the stock screen | 1 | Done (1D-1) |
+| Low stock and out of stock notifications | 1 | Next (1E) |
 | Expiry, slow-moving, non-moving and overstock alerts | 2 | Planned |
 | Stock reports (current, valuation, movement) | 1 | Next (1E) |
 | Warehouse comparison, batch and serial reports | 2 | Planned |
@@ -174,12 +186,13 @@ A zip of the full project is delivered at the end of every phase, and as a check
 | --- | --- | --- |
 | Notification center with live in-app updates, read state | 1 | Done |
 | Notifications for voucher and expense submission, approval, rejection and payment | 1 | Done |
+| Notifications for requisition, order, bill and stock adjustment approvals, goods received, bills due | 1 | Done (1D-1) |
 | Events: approvals, dues, overdue invoices, stock, purchase orders, deadlines, warranty, document expiry, budget | 1 to 3 | Generated as each module ships |
 | Push notifications on mobile | 1 | Next (1E, needs a Firebase project) |
 | Email notifications | 2 | Planned |
 | SMS and WhatsApp through connected services | 3 | Planned |
 | Per-user notification preferences | 2 | Planned |
-| Deep link from notification to the record | 1 | Done for vouchers and expenses, other records as they ship |
+| Deep link from notification to the record | 1 | Done for vouchers, expenses, purchase documents and stock adjustments; sales records as they ship |
 
 ## 17. Reports and business intelligence
 
@@ -223,7 +236,7 @@ A zip of the full project is delivered at the end of every phase, and as a check
 | Search pages and actions (Ctrl K or Cmd K), permission-aware | 1 | Done |
 | Search customers, suppliers, products, invoices, vouchers, orders | 1 | Next (1E) |
 | Search projects, tasks, employees, assets, tickets, documents | 2 and 3 | Planned |
-| Quick actions (invoice, quotation, purchase request, payment, expense, customer, supplier, task, transfer) | 1 | Done (shortcuts), targets arrive with modules; customer and supplier targets are live |
+| Quick actions (invoice, quotation, purchase request, payment, expense, customer, supplier, task, transfer) | 1 | Done (shortcuts), targets arrive with modules; customer, supplier, invoice and receipt targets are live |
 
 ## 21. Settings and administration
 
@@ -234,7 +247,8 @@ A zip of the full project is delivered at the end of every phase, and as a check
 | Invoice and voucher numbering rules (prefix, length, next number) | 1 | Done |
 | Branch and department setup | 1 | Done |
 | Tax rates (configurable, none assumed) | 1 | Done |
-| Tax applied on documents and VAT summary reports | 1 and 2 | Next (1D), reports in Phase 2 |
+| Tax applied on purchase documents (input tax booked on bills) | 1 | Done (1D-1) |
+| Tax applied on sales documents, VAT summary reports | 1 and 2 | Next (1D-2), reports in Phase 2 |
 | Payment methods, units, brands, product, customer and supplier categories, document categories | 1 | Done |
 | Warehouse setup | 1 | Done |
 | Approval rules | 1 | Next (1E) |

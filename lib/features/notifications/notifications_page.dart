@@ -10,6 +10,7 @@ import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_card.dart';
 import '../../shared/widgets/app_page.dart';
 import '../../shared/widgets/feedback.dart';
+import '../trade/trade_models.dart';
 
 /// Live notifications for the signed-in user in the active company.
 final notificationsStreamProvider = StreamProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
@@ -57,6 +58,8 @@ class NotificationsPage extends ConsumerWidget {
     return switch (row['entity_type']) {
       'voucher' => '/finance/vouchers/$id',
       'expense' || 'income' => '/finance/transactions?open=$id',
+      'stock_adjustment' => '/inventory/adjustments/$id',
+      final String type => tradeDocumentPath(type, '$id'),
       _ => null,
     };
   }

@@ -2,8 +2,10 @@
 
 Central business operating system for Android, iOS and Web. One Flutter codebase, Supabase backend.
 
-This archive is the Phase 1, Step 1C build: platform foundation, master data and the finance core. See `docs/FEATURE_TRACKER.md` for the
-status of every feature in the product plan and `docs/ARCHITECTURE.md` for design decisions.
+This archive is the Phase 1, Step 1D-2 build: platform foundation, master data, the finance core, purchase and stock,
+and sales and payments.
+See `progress.md` for what is done and what remains, `docs/FEATURE_TRACKER.md` for the status of every feature in the
+product plan and `docs/ARCHITECTURE.md` for design decisions.
 
 ## What is in this build
 
@@ -16,12 +18,26 @@ status of every feature in the product plan and `docs/ARCHITECTURE.md` for desig
 - Dashboard frame with quick actions and setup checklist
 - Navigation map for every module in the plan; unbuilt modules open a roadmap page
 - Config-driven CRUD engine used by all master-data screens
-- Customers and suppliers (groups, credit terms, addresses, opening balances, automatic codes)
+- Customers and suppliers (groups, credit terms, addresses, automatic codes), each with a profile page showing dues,
+  overdue amounts, advances, credit available, documents, payments, statement and details
 - Products and services (SKU, barcode, category, brand, unit, pricing, tax rate, stock levels, images)
 - Warehouses, with a default warehouse
 - Finance: chart of accounts with balances, cash, bank and mobile wallet accounts, vouchers (payment, receipt,
   transfer, journal) with submit, approve, reject, post and reverse, PDF print with amount in words, income and
   expense with request and approval, cashbook, bankbook and account ledger, bill photos and attachments
+- Purchase: requisitions, purchase orders, goods receipts and supplier bills with approval, linked documents, order
+  progress (ordered, received, billed), three-way matching, price variance and accounting entries
+- Stock: movement ledger, warehouse balances at weighted average cost, stock overview with low and out of stock
+  warnings, item stock cards with running balance, stock adjustments (opening stock, count correction, damaged,
+  expired, lost, internal issue) with approval and accounting
+- Sales: quotations (send, accepted or declined, expiry), sales orders with approval, and invoices that issue stock at
+  average cost, book the cost of goods sold and check the customer's credit limit; convert a quotation to an order and
+  invoice an order in full or in parts; stock availability shown while selling
+- Receipts from customers and payments to suppliers with allocation to several invoices or bills, partial payments,
+  advances held and applied later, unapply and cancel, with the accounting entries
+- Receivables and Payables screens with aging (not yet due, 1 to 30, 31 to 60, 61 to 90, over 90 days past due),
+  advances, drill-down to the party, and a notice if the ledger control account ever disagrees with the open documents
+- Opening balances entered as opening invoices and bills with their original dates, so they age like any document
 - Business settings: units, product categories, brands, customer groups, supplier categories, payment methods,
   document categories, tax rates and document numbering rules
 
@@ -39,10 +55,12 @@ status of every feature in the product plan and `docs/ARCHITECTURE.md` for desig
    flutter pub get
    ```
 
-2. Create the database. Run the files in `supabase/migrations/` in order (0001, 0002, then 0003), either by pasting each
+2. Create the database. Run the files in `supabase/migrations/` in order (0001, 0002, 0003, 0004, then 0005), either by pasting each
    into the Supabase SQL editor or with the CLI: `supabase link --project-ref <ref>` then `supabase db push`.
-   If you already applied earlier files, run only the new ones. 0002 adds a default warehouse and 0003 adds the
-   chart of accounts and a cash account to existing companies.
+   If you already applied earlier files, run only the new ones. 0002 adds a default warehouse, 0003 adds the
+   chart of accounts and a cash account to existing companies, 0004 adds three system accounts (Goods received not
+   billed, Purchase price variance, Stock adjustments and write-offs) to existing companies, and 0005 adds numbering for
+   receipts, supplier payments and opening balances.
 
 3. In Supabase, Authentication settings:
    - For quick local testing you may turn off "Confirm email". Keep it on for production.
@@ -87,7 +105,17 @@ flutter test
 
 ## Status of verification
 
-- The database migration was applied to PostgreSQL 16 and exercised with test users: seeding, row level security,
+- The database migrations were applied to PostgreSQL 16 and exercised with test users: seeding, row level security,
   owner protection, invitation claiming and document numbering all behaved as designed.
-- The Flutter code was written without access to the Flutter SDK, so it has not been compiled yet. Run
-  `flutter analyze` first and report anything it flags; fixes are quick.
+- Migration 0004 has an automated test in `supabase/tests/0004_purchase_stock_test.sql` (see the folder's README). It
+  walks a requisition through order, partial receipts, a bill with a price difference, reversals, adjustments and
+  permission checks, and verifies that stock balances equal the movement ledger and that the Inventory ledger account
+  equals total stock value.
+- Migration 0005 has an automated test in `supabase/tests/0005_sales_payments_test.sql`. It covers the sales flow from
+  quotation to invoice, posting and stock, credit limits, opening balances, receipts and payments with allocation,
+  advances and reversals, aging and statements, and checks that the receivable, payable and advance accounts equal the
+  open documents behind them.
+- The Flutter code was written without access to the Flutter SDK, so it has not been compiled yet. Every Dart file
+  was parsed with the Dart SDK and the pure calculation helpers were run in the Dart VM, but type checking against
+  the Flutter and package APIs could not be done. Run `flutter analyze` first and report anything it flags; fixes
+  are quick.

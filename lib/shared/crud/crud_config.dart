@@ -81,6 +81,7 @@ class CrudConfig {
     this.extraInsert = const {},
     this.filters = const {},
     this.collapsedSections = const [],
+    this.profilePath,
   });
 
   final String title;
@@ -110,4 +111,8 @@ class CrudConfig {
 
   /// Form sections that start collapsed (advanced details).
   final List<String> collapsedSections;
+
+  /// When set, tapping a row opens this page instead of the edit form (for example a customer profile).
+  /// The edit form stays available from the row menu.
+  final String Function(Map<String, dynamic> row)? profilePath;
 }

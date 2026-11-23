@@ -48,7 +48,7 @@ class _QuickAction {
 }
 
 const _quickActions = [
-  _QuickAction('New invoice', Icons.receipt_long_outlined, '/sales/invoices', Modules.sales),
+  _QuickAction('New invoice', Icons.receipt_long_outlined, '/sales/invoices/new', Modules.sales),
   _QuickAction('Record payment', Icons.payments_outlined, '/finance/receivables', Modules.finance),
   _QuickAction('New expense', Icons.swap_vert_outlined, '/finance/transactions', Modules.expenses),
   _QuickAction('Add customer', Icons.person_add_alt_outlined, '/sales/customers', Modules.sales),

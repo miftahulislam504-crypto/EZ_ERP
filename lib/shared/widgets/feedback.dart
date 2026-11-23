@@ -25,7 +25,7 @@ class StatusBadge extends StatelessWidget {
       'approved' || 'paid' || 'active' || 'accepted' || 'completed' || 'received' || 'done' || 'won' => BadgeTone.success,
       'pending' || 'submitted' || 'in_review' => BadgeTone.warning,
       'rejected' || 'overdue' || 'revoked' || 'cancelled' || 'failed' || 'lost' || 'bounced' => BadgeTone.danger,
-      'partial' || 'in_progress' || 'sent' => BadgeTone.info,
+      'partial' || 'in_progress' || 'sent' || 'ordered' || 'converted' || 'invoiced' => BadgeTone.info,
       'posted' || 'confirmed' => BadgeTone.primary,
       _ => BadgeTone.neutral,
     };

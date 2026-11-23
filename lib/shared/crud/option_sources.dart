@@ -31,6 +31,7 @@ final productCategoryOptions = _lookupSource('product_category');
 final brandOptions = _lookupSource('brand');
 final customerGroupOptions = _lookupSource('customer_group');
 final supplierCategoryOptions = _lookupSource('supplier_category');
+final paymentMethodOptions = _lookupSource('payment_method');
 
 final branchOptions = FutureProvider.autoDispose<List<Option>>((ref) async {
   final orgId = ref.watch(activeMembershipProvider.select((m) => m?.orgId));
